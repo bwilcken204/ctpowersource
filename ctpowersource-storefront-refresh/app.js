@@ -50,6 +50,8 @@ const money=new Intl.NumberFormat("en-US",{style:"currency",currency:"USD",maxim
 const pricing={discountRate:.70,targetGrossMargin:.20};
 function quotePrice(listPrice){return listPrice==null?null:listPrice*(1-pricing.discountRate)/(1-pricing.targetGrossMargin);}
 function productImage(product){
+  const primary=Array.isArray(product.assets)?product.assets.find(a=>a.asset_type==="image"&&a.is_primary!==false&&a.url):null;
+  if(primary?.url)return primary.url;
   const sku=String(product.sku||"");
   if(["48250600","48250601"].includes(sku))return "./assets/products/diris-a-100.webp";
   if(["48250604","48250605"].includes(sku))return "./assets/products/diris-a-200.webp";

@@ -44,6 +44,29 @@ module.exports = async function handler(request, response) {
       if (page.length < pageSize) break;
     }
 
+    // Product media and documents are maintained separately so catalog rows stay lean.
+    // Treat assets as optional until the public read policy is enabled in Supabase.
+    const assetsEndpoint = new URL("/rest/v1/product_assets", projectUrl);
+    assetsEndpoint.searchParams.set("select", "manufacturer,sku,asset_type,title,url,alt_text,is_primary,is_public,verified");
+    assetsEndpoint.searchParams.set("is_public", "eq.true");
+    assetsEndpoint.searchParams.set("order", "is_primary.desc,created_at.asc");
+    assetsEndpoint.searchParams.set("limit", "10000");
+    const assetsResult = await fetch(assetsEndpoint, { headers: { apikey: publishableKey } });
+    if (assetsResult.ok) {
+      const assets = await assetsResult.json();
+      const bySku = new Map();
+      for (const asset of assets) {
+        const key = `${String(asset.manufacturer).toLowerCase()}::${String(asset.sku)}`;
+        if (!bySku.has(key)) bySku.set(key, []);
+        bySku.get(key).push(asset);
+      }
+      for (const product of products) {
+        product.assets = bySku.get(`${String(product.manufacturer).toLowerCase()}::${String(product.sku)}`) || [];
+      }
+    } else {
+      console.warn("Product assets unavailable; continuing without media", await assetsResult.text());
+    }
+
     response.setHeader("Cache-Control", "public, s-maxage=300, stale-while-revalidate=86400");
     return response.status(200).json({ products, count: products.length });
   } catch (error) {
