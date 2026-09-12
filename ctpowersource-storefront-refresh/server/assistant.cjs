@@ -1,0 +1,15 @@
+const c=require('./commerce.cjs');
+const string={type:'string'};
+const object=properties=>({type:'object',properties,required:Object.keys(properties),additionalProperties:false});
+const extraction=object({requirements:{type:'array',maxItems:30,items:object({requirement:string,quantity:{type:['integer','null']},terms:{type:'array',maxItems:8,items:string}})}});
+const output=object({summary:string,lines:{type:'array',maxItems:30,items:object({requirement:string,reason:string,quantity:{type:['integer','null']},sku:{type:['string','null']},gaps:{type:'array',items:string}})}});
+async function ask(instructions,content,schema){
+  const response=await fetch('https://api.openai.com/v1/responses',{method:'POST',headers:{Authorization:'Bearer '+process.env.OPENAI_API_KEY,'Content-Type':'application/json'},body:JSON.stringify({model:process.env.OPENAI_MODEL,store:false,instructions,input:[{role:'user',content}],max_output_tokens:6000,text:{format:{type:'json_schema',name:'catalog_response',strict:true,schema}}}),signal:AbortSignal.timeout(55000)});
+  if(!response.ok)throw c.fail(502,'The AI service could not complete the request. Please try again or contact CTE.');
+  const data=await response.json();if(data.status!=='completed')throw c.fail(502,'The analysis was incomplete. Please use a shorter specification.');
+  const text=(data.output||[]).flatMap(x=>x.content||[]).filter(x=>x.type==='output_text').map(x=>x.text).join('');
+  try{return JSON.parse(text);}catch{throw c.fail(502,'No parts list was produced. Please clarify the requirements.');}
+}
+function candidates(requirements,products){const selected=new Map();for(const r of requirements){const terms=r.terms.map(x=>x.toLowerCase()).filter(x=>x.length>1);const ranked=products.map(p=>{const hay=[p.sku,p.short_description,p.long_description,p.product_type].join(' ').toLowerCase();return {p,score:terms.reduce((n,t)=>n+(String(p.sku).toLowerCase()===t?100:hay.includes(t)?1:0),0)};}).filter(x=>x.score>0).sort((a,b)=>b.score-a.score).slice(0,8);for(const {p}of ranked)selected.set(String(p.sku),{sku:String(p.sku),description:p.short_description,details:String(p.long_description||'').slice(0,1200),type:p.product_type});}return [...selected.values()].slice(0,100);}
+function verify(result,rows){if(!result||typeof result.summary!=='string'||!Array.isArray(result.lines)||result.lines.length>30)throw c.fail(502,'Invalid analysis. Please try again.');const skus=new Set(rows.map(x=>x.sku));for(const line of result.lines){if(typeof line.requirement!=='string'||typeof line.reason!=='string'||!Array.isArray(line.gaps)||!line.gaps.every(x=>typeof x==='string'))throw c.fail(502,'Invalid analysis. Please try again.');if(line.quantity!==null&&(!Number.isInteger(line.quantity)||line.quantity<1||line.quantity>999)){line.quantity=null;line.gaps.push('Confirm quantity with CTE.');}if(line.sku!==null&&!skus.has(line.sku)){line.sku=null;line.reason='The proposed reference could not be verified against this catalog.';line.gaps.push('CTE must identify the correct reference.');}}return result;}
+module.exports={ask,extraction,output,candidates,verify};
