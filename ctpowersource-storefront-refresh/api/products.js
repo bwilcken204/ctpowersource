@@ -51,7 +51,7 @@ module.exports = async function handler(request, response) {
     const assetsEndpoint = new URL("/rest/v1/public_product_assets", projectUrl);
     assetsEndpoint.searchParams.set("select", "manufacturer,sku,asset_type,title,url,alt_text,is_primary,is_public,verified");
     assetsEndpoint.searchParams.set("is_public", "eq.true");
-    assetsEndpoint.searchParams.set("order", "is_primary.desc,created_at.asc");
+    assetsEndpoint.searchParams.set("order", "is_primary.desc");
     assetsEndpoint.searchParams.set("limit", "10000");
     const assetsResult = await fetch(assetsEndpoint, { headers: { apikey: publishableKey } });
     if (assetsResult.ok) {
