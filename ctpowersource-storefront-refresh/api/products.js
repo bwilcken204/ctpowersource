@@ -49,8 +49,7 @@ module.exports = async function handler(request, response) {
     // Read through the public view so the storefront uses the same anonymous-read
     // surface as the catalog view. The view exposes only public asset fields.
     const assetsEndpoint = new URL("/rest/v1/public_product_assets", projectUrl);
-    assetsEndpoint.searchParams.set("select", "manufacturer,sku,asset_type,title,url,alt_text,is_primary,is_public,verified");
-    assetsEndpoint.searchParams.set("order", "is_primary.desc");
+    assetsEndpoint.searchParams.set("select", "manufacturer,sku,asset_type,title,url,alt_text");
     assetsEndpoint.searchParams.set("limit", "10000");
     const assetsResult = await fetch(assetsEndpoint, { headers: { apikey: publishableKey } });
     if (assetsResult.ok) {
