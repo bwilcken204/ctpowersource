@@ -13,7 +13,7 @@ This package updates only two files. It does not include the admin dashboard.
 
 Do not create a second nested ctpowersource-storefront-refresh folder. Do not delete the existing website folder. There is no need to reimport the CSV.
 
-The API update reads public assets from product_assets and attaches them to the matching manufacturer/SKU. The product page displays document links and the primary asset image.
+The API update reads public assets from public_product_assets and attaches them to the matching manufacturer/SKU. The product page displays document links and the primary asset image.
 
 If the page still shows 'Available from CTE on request', check /api/products for SKU 48250600 and an assets array. Empty or missing assets can indicate Supabase read permissions; check Vercel logs for 'Product assets unavailable'. No database permissions were changed by this update. Do not disable RLS to troubleshoot.
 

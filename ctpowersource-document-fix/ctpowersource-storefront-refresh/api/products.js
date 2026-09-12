@@ -46,7 +46,9 @@ module.exports = async function handler(request, response) {
 
     // Product media and documents are maintained separately so catalog rows stay lean.
     // Treat assets as optional until the public read policy is enabled in Supabase.
-    const assetsEndpoint = new URL("/rest/v1/product_assets", projectUrl);
+    // Read through the public view so the storefront uses the same anonymous-read
+    // surface as the catalog view. The view exposes only public asset fields.
+    const assetsEndpoint = new URL("/rest/v1/public_product_assets", projectUrl);
     assetsEndpoint.searchParams.set("select", "manufacturer,sku,asset_type,title,url,alt_text,is_primary,is_public,verified");
     assetsEndpoint.searchParams.set("is_public", "eq.true");
     assetsEndpoint.searchParams.set("order", "is_primary.desc,created_at.asc");
