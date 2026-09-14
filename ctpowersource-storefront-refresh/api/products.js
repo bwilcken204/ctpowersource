@@ -19,6 +19,13 @@ module.exports = async function handler(request, response) {
     "lead_time_unit", "availability_as_of",
   ].join(",");
 
+  const hiddenSkus = new Set([
+    "48250204", "48250092", "48250082", "48250402", "194S0000",
+    "48250093", "48250083", "48250203", "48250089", "48250400",
+    "48250094", "48250097", "48250088", "48250080", "48250090",
+    "48250401", "48250502", "48250405", "48250403",
+  ]);
+
   const products = [];
   const pageSize = 1000;
 
@@ -44,6 +51,8 @@ module.exports = async function handler(request, response) {
       if (page.length < pageSize) break;
     }
 
+    const visibleProducts = products.filter((product) => !hiddenSkus.has(String(product.sku)));
+
     // Product media and documents are maintained separately so catalog rows stay lean.
     // Treat assets as optional until the public read policy is enabled in Supabase.
     // Read through the public view so the storefront uses the same anonymous-read
@@ -60,7 +69,7 @@ module.exports = async function handler(request, response) {
         if (!bySku.has(key)) bySku.set(key, []);
         bySku.get(key).push(asset);
       }
-      for (const product of products) {
+      for (const product of visibleProducts) {
         product.assets = bySku.get(`${String(product.manufacturer).toLowerCase()}::${String(product.sku)}`) || [];
       }
     } else {
@@ -68,7 +77,7 @@ module.exports = async function handler(request, response) {
     }
 
     response.setHeader("Cache-Control", "public, s-maxage=300, stale-while-revalidate=86400");
-    return response.status(200).json({ products, count: products.length });
+    return response.status(200).json({ products: visibleProducts, count: visibleProducts.length });
   } catch (error) {
     console.error("Catalog fetch failed", error);
     return response.status(502).json({ error: "The product catalog is temporarily unavailable" });
