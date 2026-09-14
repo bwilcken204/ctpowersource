@@ -15,3 +15,12 @@
 @media(max-width:700px){.detail-hero{grid-template-columns:1fr;gap:24px}.detail-image{min-height:220px}.detail-specs,.document-list{grid-template-columns:1fr}.detail-price-block{align-items:start;flex-direction:column}}
 .store-banner-inner{display:grid;grid-template-columns:minmax(0,1fr) 310px;gap:70px;align-items:center;text-align:left}.store-banner-inner>div:first-child{max-width:none;margin:0}.hero-support-card{border-left:1px solid #62645b;padding:12px 0 12px 36px;align-self:stretch;display:flex;flex-direction:column;justify-content:center}.hero-support-card .eyebrow{color:#e4c574;margin-bottom:12px}.hero-support-card h2{font-size:24px;line-height:1.2;color:#fff;margin:0 0 14px}.hero-support-card p:not(.eyebrow){color:#d0d3d2;line-height:1.5;margin:0 0 20px}.hero-support-card .button{align-self:flex-start}.hero-support-link{color:#edd69b;margin-top:16px;font-size:14px}@media(max-width:700px){.store-banner-inner{display:block;text-align:center}.hero-support-card{border-left:0;border-top:1px solid #62645b;padding:24px 0 0;margin-top:28px}.hero-support-card .button{align-self:center}}
 .regional-service-note{color:#d7b963!important;font-size:14px;margin-top:-8px!important}
+
+/* Document links are full cards; their nested text must not draw inline borders. */
+.document-list{grid-template-columns:repeat(3,minmax(0,1fr));gap:16px;align-items:stretch}
+.product-detail-page .document-list>a,.document-list>span{display:flex;flex-direction:column;min-width:0;padding:20px;border:1px solid var(--line);border-radius:6px;background:#fff;font-weight:600;line-height:1.5;overflow-wrap:anywhere;text-decoration:none}
+.document-list>a>span{display:flex;flex:1;flex-direction:column;min-width:0;padding:0;border:0;border-radius:0}
+.document-list>a small{margin-top:auto;padding-top:12px;font-size:13px;text-transform:capitalize}
+.product-detail-page .document-list>a:hover{border-color:#b99a50;background:#fbf8ef;text-decoration:none}
+.product-detail-page .document-list>a:focus-visible{outline:3px solid #b99a50;outline-offset:3px}
+@media(max-width:700px){.document-list{grid-template-columns:1fr}}
