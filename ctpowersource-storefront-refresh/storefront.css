@@ -11,7 +11,7 @@ body{background:#fff;font-size:16px}.shell{width:min(1320px,calc(100% - 64px))}b
 .banner-logo img,.manufacturer-brand img{object-fit:cover;mix-blend-mode:screen;filter:brightness(1.4)}.banner-logo{isolation:isolate;background:#202528}.manufacturer-brand{isolation:isolate}.banner-logo img{height:auto;aspect-ratio:4.5}.manufacturer-brand img{height:auto;aspect-ratio:4.5}
 [hidden]{display:none!important}
 .list-price-note{display:block!important;margin-top:4px;color:#777;font-size:12px!important;font-weight:400!important}
-.product-image{grid-column:1/-1;height:90px;background:#f6f6f3;border-bottom:1px solid #e0e1da;margin:-20px -20px 12px;display:grid;place-items:center;overflow:hidden}.product-image img{width:110px;height:80px;object-fit:contain}.product-card:has(.product-image){grid-template-rows:auto auto 1fr auto}.product-card:has(.product-image) .product-bottom{grid-row:auto}
+.product-image{grid-column:1/-1;height:90px;background:#f6f6f3;border-bottom:1px solid #e0e1da;margin:-20px -20px 12px;display:grid;place-items:center;overflow:hidden}.product-image:focus-visible{outline:3px solid #b88716;outline-offset:-3px}.product-image img{width:110px;height:80px;object-fit:contain}.product-card:has(.product-image){grid-template-rows:auto auto 1fr auto}.product-card:has(.product-image) .product-bottom{grid-row:auto}
 @media(max-width:600px){.product-image{margin:-16px -16px 12px;height:80px}.product-image img{width:95px;height:70px}}
 /* Compact retail cards, matching the reference's photo/name/price hierarchy. */
 .catalog-results .product-grid{grid-template-columns:repeat(3,minmax(0,1fr));gap:14px}
