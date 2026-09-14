@@ -13,23 +13,19 @@ const sampleProducts = [
 
 const productTaxonomy=[
   {title:"Power Monitoring & Metering",code:"PM",groups:[
-    {title:"Single-point metering & power quality",description:"Panel-mounted meters for monitoring, analysis, and event capture.",leaves:[{title:"Power quality meters",query:"DIRIS A",brand:"Socomec"},{title:"Power and energy meters",category:"MONITORING & ANALYSIS",brand:"Socomec"}]},
+    {title:"Single-point metering & power quality",description:"Panel-mounted meters for monitoring, analysis, and event capture.",leaves:[{title:"Metering",category:"Metering",brand:"Socomec"},{title:"Build a power-quality solution",href:"./solutions.html",brand:"CT Power Source"}]},
     {title:"Multi-point metering systems",description:"Scalable systems for branch circuits and distributed loads.",leaves:[{title:"DIRIS Digiware systems",query:"DIGIWARE",brand:"Socomec"},{title:"Multi-circuit meters",query:"MCM",brand:"Socomec"}]},
     {title:"Enclosed metering solutions",description:"Factory-enclosed assemblies for faster installation.",leaves:[{title:"Enclosed power meters",query:"DIGIBOX",brand:"Socomec"},{title:"Metering enclosures and accessories",category:"MEASUREMENT SYSTEM",brand:"Socomec"}]},
-    {title:"Current sensors",description:"Solid-core, split-core, flexible, and specialty current sensing.",leaves:[{title:"Split-core current sensors",query:"SPLIT CORE",brand:"Socomec"},{title:"Solid-core current sensors",query:"SOLID CORE",brand:"Socomec"},{title:"Rogowski and flexible sensors",query:"ROPE",brand:"Socomec"}]},
+    {title:"Current Transformers",description:"Solid-core, split-core, flexible, and specialty current sensing.",leaves:[{title:"Split-core current sensors",query:"SPLIT CORE",brand:"Socomec"},{title:"Solid-core current sensors",query:"SOLID CORE",brand:"Socomec"},{title:"Rogowski and flexible sensors",query:"ROGOWSKI",brand:"Socomec"}]},
     {title:"Gateways, software & interfaces",description:"Connect, collect, visualize, and export electrical data.",leaves:[{title:"Communication gateways",query:"GATEWAY",brand:"Socomec"},{title:"Software and interfaces",category:"SOFTWARES & INTERFACES",brand:"Socomec"}]},
     {title:"Insulation monitoring",description:"Monitor insulation health and locate developing faults.",leaves:[{title:"Insulation monitoring devices",category:"INSULATION MONITORING",brand:"Socomec"}]}
   ]},
   {title:"Power Protection, Switching & Transfer",code:"PS",groups:[
     {title:"Non-fusible disconnect switches",description:"Safe isolation and load switching for AC and DC systems.",leaves:[{title:"AC disconnect switches",category:"AC LOAD BREAK SWITCH",brand:"Socomec"},{title:"DC, PV and ESS disconnects",category:"DC_PV LOAD BREAK SWITCH",brand:"Socomec"}]},
     {title:"Fuse protection",description:"Fusible switching, fuse bases, and coordinated protection.",leaves:[{title:"Fusible disconnect switches",category:"FUSE COMBINATION SWITCH",brand:"Socomec"},{title:"Fuses and fuse bases",category:"FUSES & FUSE BASES",brand:"Socomec"}]},
-    {title:"Transfer switches",description:"Manual, motorized, and automatic source transfer.",leaves:[{title:"Manual transfer switches",category:"MANUAL CHANGEOVER SWITCH",brand:"Socomec"},{title:"Motorized transfer switches",category:"MOTORISED CHANGEOVER SWITCH",brand:"Socomec"},{title:"ATS controllers",category:"CONTROLLER",brand:"Socomec"}]},
+    {title:"Transfer switches",description:"Manual, motorized, and automatic source transfer.",leaves:[{title:"Manual transfer switch",category:"MANUAL CHANGEOVER SWITCH",brand:"Socomec"},{title:"ATS",category:"MOTORISED CHANGEOVER SWITCH",brand:"Socomec"},{title:"ATS controllers",category:"CONTROLLER",brand:"Socomec"}]},
     {title:"Enclosed switching",description:"Factory-enclosed switching and transfer assemblies.",leaves:[{title:"Enclosed switches",category:"ENCLOSED SWITCH",brand:"Socomec"}]},
     {title:"Mounting, cabling & accessories",description:"Handles, shafts, terminals, busbars, and installation components.",leaves:[{title:"Mounting and cabling accessories",category:"MOUNTING & CABLING ACCESSORIES",brand:"Socomec"},{title:"Common accessories",category:"COMMON ACCESSORIES",brand:"Socomec"}]}
-  ]},
-  {title:"Power Conversion & Power Quality",code:"PQ",groups:[
-    {title:"Transformers",description:"Efficient transformers for distribution and specialty loads.",leaves:[{title:"Low-voltage transformers",category:"TRANSFORMERS",brand:"Socomec / Powersmiths"}]},
-    {title:"Power quality solutions",description:"Metering, analysis, mitigation, and system-level support.",leaves:[{title:"Power quality meters",query:"POWER QUALITY",brand:"Socomec"},{title:"Build a power-quality solution",href:"./solutions.html",brand:"CT Power Source"}]}
   ]},
   {title:"Energy Storage & Resilience",code:"ES",groups:[
     {title:"ESS switching & protection",description:"DC isolation and fuse protection for storage applications.",leaves:[{title:"ESS disconnect switches",query:"ESS",brand:"Socomec"},{title:"Battery-system fuse protection",query:"BESS",brand:"Socomec"}]},
@@ -42,7 +38,18 @@ const productTaxonomy=[
   ]}
 ];
 
+function storefrontCategory(category){
+  const aliases={"MOTORISED CHANGEOVER SWITCH":"ATS","MOTORIZED CHANGEOVER SWITCH":"ATS","MANUAL CHANGEOVER SWITCH":"Manual transfer switch","MONITORING & ANALYSIS":"Metering","MEASUREMENT":"Metering","TRANSFORMERS":"Current Transformers"};
+  return aliases[String(category||'').toUpperCase()]||category;
+}
+function classifyStorefrontProduct(product){
+  const text=[product.short_description,product.long_description].join(' ');
+  const isMeter=/\b(meter|meters|multifunction meter)\b/i.test(product.short_description||'');
+  const isCT=!isMeter&&/\b(solid[ -]?core|split[ -]?core|rogowski|rope sensor)\b/i.test(text);
+  return {...product,product_type:isCT?'Current Transformers':storefrontCategory(product.product_type)};
+}
 const state={products:[],filtered:[],visible:12,usingPreview:false};
+const hiddenSkus=new Set(["48250204","48250092","48250082","48250402","194S0000","48250093","48250083","48250203","48250089","48250400","48250094","48250097","48250088","48250080","48250090","48250401","48250502","48250405","48250403"]);
 const $=selector=>document.querySelector(selector);
 const $$=selector=>[...document.querySelectorAll(selector)];
 const money=new Intl.NumberFormat("en-US",{style:"currency",currency:"USD",maximumFractionDigits:2});
@@ -66,11 +73,12 @@ function productCard(product){const image=productImage(product);return `<article
 function productMatchesQuery(product,query){
   if(!query)return true;
   query=query.replace(/\bpq\b/g,'power quality').replace(/\bmcb\b/g,'miniature circuit breaker').replace(/\bmccb\b/g,'molded case circuit breaker');
-  const haystack=[product.sku,product.short_description,product.long_description,product.product_type].join(" ").toLowerCase();
+  query=query.replace(/\b(split|solid)-core\b/g,'$1 core');
+  const haystack=[product.sku,product.short_description,product.long_description,product.product_type].join(" ").toLowerCase().replace(/\b(split|solid)-core\b/g,'$1 core');
   if(haystack.includes(query))return true;
   if(/^(metering|meter|meters|power metering|power meter|power meters)$/.test(query)){
     const meteringTerms=["meter","diris","digiware","current sensor","current acquisition","current transformer","333mv ct","split core","split-core","solid core","solid-core","rogowski","rope sensor"];
-    const meteringFamily=["MONITORING & ANALYSIS","MEASUREMENT SYSTEM","MEASUREMENT"].includes(product.product_type||"");
+    const meteringFamily=["Metering","MEASUREMENT SYSTEM"].includes(product.product_type||"");
     return meteringFamily&&meteringTerms.some(term=>haystack.includes(term));
   }
   if(/^(ct|cts|current sensors|current transformers)$/.test(query)){
@@ -106,7 +114,7 @@ function renderProducts(){
 function populateCategories(){
   const filter=$("#category-filter");
   if(!filter)return;
-  const categories=[...new Set([...state.products.map(p=>p.product_type),...productTaxonomy.flatMap(c=>c.groups.flatMap(g=>g.leaves.map(l=>l.category)))].filter(Boolean))].sort();
+  const categories=[...new Set([...state.products.map(p=>p.product_type),...productTaxonomy.flatMap(c=>c.groups.flatMap(g=>g.leaves.map(l=>storefrontCategory(l.category))))].filter(Boolean))].sort();
   filter.innerHTML=`<option value="">All categories</option>`+categories.map(category=>`<option value="${escapeHtml(category)}">${escapeHtml(category)}</option>`).join("");
 }
 
@@ -114,7 +122,7 @@ function applyUrlFilters(){
   if(!$("#product-grid"))return;
   const params=new URLSearchParams(window.location.search);
   $("#catalog-query").value=params.get("q")||"";
-  const category=params.get("category")||"";
+  const category=storefrontCategory(params.get("category")||"");
   const availability=params.get("availability")||"";
   if([...$("#category-filter").options].some(option=>option.value===category))$("#category-filter").value=category;
   if([...$("#availability-filter").options].some(option=>option.value===availability))$("#availability-filter").value=availability;
@@ -190,11 +198,12 @@ async function loadProducts(){
     if(!response.ok)throw new Error("Catalog unavailable");
     const payload=await response.json();
     if(!Array.isArray(payload.products)||!payload.products.length)throw new Error("Empty catalog");
-    state.products=payload.products;
+    state.products=payload.products.filter(p=>!hiddenSkus.has(String(p.sku)));
     const counts=state.products.reduce((acc,p)=>{acc[p.availability_status]=(acc[p.availability_status]||0)+1;return acc;},{});
     if($("#metric-stock"))$("#metric-stock").textContent=(counts["In stock"]||0).toLocaleString();
     if($("#metric-incoming"))$("#metric-incoming").textContent=(counts["Incoming"]||0).toLocaleString();
-  }catch(error){state.products=sampleProducts;state.usingPreview=true;}
+  }catch(error){state.products=sampleProducts.filter(p=>!hiddenSkus.has(String(p.sku)));state.usingPreview=true;}
+  state.products=state.products.map(classifyStorefrontProduct);
   state.filtered=[...state.products];
   if($("#product-grid")){populateCategories();applyUrlFilters();}
   window.dispatchEvent(new Event('catalog-loaded'));
